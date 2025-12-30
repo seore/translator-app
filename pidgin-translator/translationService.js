@@ -8,7 +8,6 @@ export function translateText(input, direction = "en-to-pidgin") {
   const [fromLang, toLang] =
     direction === "en-to-pidgin" ? ["en", "pidgin"] : ["pidgin", "en"];
 
-  // Exact match
   const directMatch = pidginDictionary.find(
     (entry) =>
       entry.languageFrom === fromLang &&
@@ -18,7 +17,6 @@ export function translateText(input, direction = "en-to-pidgin") {
 
   if (directMatch) return directMatch;
 
-  // Loose "contains" match
   const looseMatch = pidginDictionary.find(
     (entry) =>
       entry.languageFrom === fromLang &&

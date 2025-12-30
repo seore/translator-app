@@ -1,16 +1,18 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   SafeAreaView,
   View,
   Text,
   TextInput,
   TouchableOpacity,
+  FlatList,
   StyleSheet,
-  StatusBar,
-  ScrollView
+  ScrollView,
+  StatusBar
 } from "react-native";
 
-import { translateText } from "../../translationService";
+import { translateText, getRandomPhrase } from "../../translationService";
+import { Audio } from "expo-av";
 
 // ----- Types -----
 type Direction = "en-to-pidgin" | "pidgin-to-en";
@@ -27,6 +29,7 @@ type PhraseEntry = {
   from: string;
   to: string;
   pronunciation?: string;
+  audio?: any;
   examples?: ExamplePair[];
   tags?: string[];
 };
@@ -50,6 +53,8 @@ export default function HomeScreen() {
   const [direction, setDirection] = useState<Direction>("en-to-pidgin");
   const [input, setInput] = useState<string>("");
   const [result, setResult] = useState<PhraseEntry | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   const handleTranslate = () => {
     const translation = translateText(input, direction) as PhraseEntry | null;
@@ -62,6 +67,41 @@ export default function HomeScreen() {
   };
 
   const isEnToPidgin = direction === "en-to-pidgin";
+
+  const playPronunciation = async () => {
+    if (!result || !result.audio || isPlaying) return;
+
+    try {
+        if (soundRef.current) {
+            await soundRef.current.unloadAsync();
+            soundRef.current = null;
+        }
+
+        const { sound } = await Audio.Sound.createAsync(result.audio);
+        soundRef.current = sound;
+        setIsPlaying(true);
+
+        sound.setOnPlaybackStatusUpdate((status) => {
+            if (!status.isLoaded) return;
+            if (status.didJustFinish) {
+                setIsPlaying(false);
+            }
+        });
+
+        await sound.playAsync();
+    } catch (e) {
+        console.warn("Error playing requested audio", e);
+        setIsPlaying(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+        if (soundRef.current) {
+            soundRef.current.unloadAsync();
+        }
+    };
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -179,6 +219,21 @@ export default function HomeScreen() {
             </View>
 
             <Text style={styles.resultMain}>{result.to}</Text>
+
+            {result.audio && (
+                <TouchableOpacity
+                  style={[
+                    styles.audioButton,
+                    isPlaying && styles.audioButtonDisabled
+                  ]}
+                  onPress={playPronunciation}
+                  disabled={isPlaying}
+                >
+                    <Text style={styles.audioButtonText}>
+                        {isPlaying ? "Playing..." : "🔊 Play pronunciation"}
+                    </Text>
+                </TouchableOpacity>
+            )}
 
             {result.pronunciation ? (
               <View style={styles.resultBlock}>
@@ -337,6 +392,24 @@ const styles = StyleSheet.create({
     minHeight: 44,
     borderWidth: 1,
     borderColor: palette.border
+  },
+  audioButton: {
+    marginTop: 6,
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    alignSelf: "flex-start",
+    backgroundColor: palette.cardSoft,
+    borderWidth: 1,
+    borderColor: palette.accentGold
+  },
+  audioButtonDisabled: {
+    opacity: 0.6
+  },
+  audioButtonText: {
+    color: palette.accentGold,
+    fontSize: 13,
+    fontWeight: "600"
   },
   translateButton: {
     marginTop: 10,

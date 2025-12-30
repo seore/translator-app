@@ -6,6 +6,7 @@ export const pidginDictionary = [
     from: "What’s going on?",
     to: "Wetin dey happen?",
     pronunciation: "weh-tin day hap-pen",
+    audio: require("./assets/audio/wetin-dey-happen.mp3"),
     examples: [
       {
         en: "What’s going on here?",
@@ -21,6 +22,7 @@ export const pidginDictionary = [
     from: "How far?",
     to: "Hi / What’s up?",
     pronunciation: "hau fah",
+    audio: require("./assets/audio/how-far.mp3"),
     examples: [
       {
         pidgin: "How far, you don chop?",
@@ -36,6 +38,7 @@ export const pidginDictionary = [
     from: "I am very hungry",
     to: "I dey craze for food",
     pronunciation: "ai day craze for food",
+    audio: require("./assets/audio/i-dey-craze-for-food.mp3"),
     examples: [
       {
         en: "I am very hungry, let’s eat.",
@@ -51,6 +54,7 @@ export const pidginDictionary = [
     from: "Abeg",
     to: "Please / I beg you",
     pronunciation: "ah-beg",
+    audio: require("./assets/audio/abeg.mp3"),
     examples: [
       {
         pidgin: "Abeg, help me small.",
@@ -66,6 +70,7 @@ export const pidginDictionary = [
     from: "I don’t understand",
     to: "I no understand",
     pronunciation: "ai no un-dah-stand",
+    audio: require("./assets/audio/i-no-understand.mp3"),
     examples: [
       {
         en: "I don’t understand what you’re saying.",
@@ -81,6 +86,7 @@ export const pidginDictionary = [
     from: "No wahala",
     to: "No problem / It’s fine",
     pronunciation: "noh wah-hah-lah",
+    audio: require("./assets/audio/no-wahala.mp3"),
     examples: [
       {
         pidgin: "No wahala, I go do am.",
@@ -96,6 +102,7 @@ export const pidginDictionary = [
     from: "I am tired",
     to: "I don tire",
     pronunciation: "ai don tai-uh",
+    audio: require("./assets/audio/i-don-tire.mp3"),
     examples: [
       {
         en: "I am tired of this work.",
