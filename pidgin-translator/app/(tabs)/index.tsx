@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   SafeAreaView,
   View,
   Text,
   TextInput,
   TouchableOpacity,
-  FlatList,
   StyleSheet,
-  StatusBar
+  StatusBar,
+  ScrollView
 } from "react-native";
 
-import { translateText, getRandomPhrase } from "../../translationService";
-import { pidginDictionary } from "../../piginDictionary";
+import { translateText } from "../../translationService";
 
 // ----- Types -----
 type Direction = "en-to-pidgin" | "pidgin-to-en";
@@ -32,320 +31,367 @@ type PhraseEntry = {
   tags?: string[];
 };
 
-// We tell TS what the dictionary actually contains
-const typedDictionary = pidginDictionary as PhraseEntry[];
+// Afrocentric palette
+const palette = {
+  bg: "#050308",
+  card: "#140910",
+  cardSoft: "#1e1116",
+  accentGold: "#facc15",
+  accentGreen: "#16a34a",
+  accentRed: "#ef4444",
+  textMain: "#fefce8",
+  textSub: "#d9d9d9ff",
+  textMuted: "#ffffffff",
+  border: "#3f2a32",
+  chipBg: "#1c1917"
+};
 
 export default function HomeScreen() {
   const [direction, setDirection] = useState<Direction>("en-to-pidgin");
   const [input, setInput] = useState<string>("");
   const [result, setResult] = useState<PhraseEntry | null>(null);
-  const [phraseOfTheDay, setPhraseOfTheDay] = useState<PhraseEntry | null>(null);
-
-  useEffect(() => {
-    const randomPhrase = getRandomPhrase() as PhraseEntry | null;
-    setPhraseOfTheDay(randomPhrase);
-  }, []);
 
   const handleTranslate = () => {
     const translation = translateText(input, direction) as PhraseEntry | null;
     setResult(translation);
   };
 
-  const toggleDirection = () => {
-    setDirection((prev) =>
-      prev === "en-to-pidgin" ? "pidgin-to-en" : "en-to-pidgin"
-    );
+  const toggleDirectionChip = (nextDirection: Direction) => {
+    setDirection(nextDirection);
     setResult(null);
-    setInput("");
   };
 
-  const directionLabel =
-    direction === "en-to-pidgin"
-      ? "English → Nigerian Pidgin"
-      : "Nigerian Pidgin → English";
-
-  const renderPhraseItem = ({ item }: { item: PhraseEntry }) => (
-    <View style={styles.phraseCard}>
-      <Text style={styles.phraseFrom}>{item.from}</Text>
-      <Text style={styles.phraseTo}>{item.to}</Text>
-
-      {item.pronunciation ? (
-        <Text style={styles.pronunciation}>
-          Pronunciation: {item.pronunciation}
-        </Text>
-      ) : null}
-
-      {item.examples && item.examples[0] && (
-        <Text style={styles.example}>
-          Example:{" "}
-          {item.languageFrom === "en"
-            ? `${item.examples[0].en} → ${item.examples[0].pidgin}`
-            : `${item.examples[0].pidgin} → ${item.examples[0].en}`}
-        </Text>
-      )}
-    </View>
-  );
+  const isEnToPidgin = direction === "en-to-pidgin";
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" />
-
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.appTitle}>Pidgin Pal</Text>
-        <Text style={styles.appSubtitle}>
-          Learn & translate Nigerian Pidgin with vibes ✨
-        </Text>
-      </View>
-
-      {/* Language Direction Toggle */}
-      <TouchableOpacity style={styles.toggleButton} onPress={toggleDirection}>
-        <Text style={styles.toggleText}>{directionLabel}</Text>
-        <Text style={styles.toggleHint}>(Tap to switch direction)</Text>
-      </TouchableOpacity>
-
-      {/* Input + Translate */}
-      <View style={styles.translateBox}>
-        <Text style={styles.label}>
-          {direction === "en-to-pidgin"
-            ? "Type an English phrase"
-            : "Type a Pidgin phrase"}
-        </Text>
-
-        <TextInput
-          style={styles.input}
-          placeholder={
-            direction === "en-to-pidgin"
-              ? "e.g. What’s going on?"
-              : "e.g. Wetin dey happen?"
-          }
-          placeholderTextColor="#6b7280"
-          multiline
-          value={input}
-          onChangeText={setInput}
-        />
-
-        <TouchableOpacity style={styles.translateButton} onPress={handleTranslate}>
-          <Text style={styles.translateButtonText}>Translate</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Translation Result */}
-      {result && (
-        <View style={styles.resultCard}>
-          <Text style={styles.resultLabel}>Translation</Text>
-          <Text style={styles.resultText}>{result.to}</Text>
-
-          {result.pronunciation ? (
-            <>
-              <Text style={styles.resultLabelSmall}>Pronunciation</Text>
-              <Text style={styles.resultSubText}>{result.pronunciation}</Text>
-            </>
-          ) : null}
-
-          {result.examples && result.examples.length > 0 && (
-            <>
-              <Text style={styles.resultLabelSmall}>Example</Text>
-              <Text style={styles.resultSubText}>
-                {direction === "en-to-pidgin"
-                  ? `${result.examples[0].en} → ${result.examples[0].pidgin}`
-                  : `${result.examples[0].pidgin} → ${result.examples[0].en}`}
-              </Text>
-            </>
-          )}
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Top accent bar */}
+        <View style={styles.flagBar}>
+          <View style={[styles.flagStripe, { backgroundColor: palette.accentGreen }]} />
+          <View style={[styles.flagStripe, { backgroundColor: palette.accentGold }]} />
+          <View style={[styles.flagStripe, { backgroundColor: palette.accentRed }]} />
         </View>
-      )}
 
-      {/* Phrase of the Day */}
-      {phraseOfTheDay && (
-        <View style={styles.phraseOfDayCard}>
-          <Text style={styles.sectionTitle}>Phrase of the Day</Text>
-          <Text style={styles.phraseOfDayMain}>{phraseOfTheDay.from}</Text>
-          <Text style={styles.phraseOfDaySub}>{phraseOfTheDay.to}</Text>
-          {phraseOfTheDay.pronunciation && (
-            <Text style={styles.pronunciationSmall}>
-              {phraseOfTheDay.pronunciation}
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.appTitle}>Pidgin Pal</Text>
+            <Text style={styles.appSubtitle}>
+              Learn & translate Nigerian Pidgin with Afro vibes
             </Text>
-          )}
+          </View>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>Naija</Text>
+          </View>
         </View>
-      )}
 
-      {/* Phrasebook */}
-      <View style={styles.phrasebookContainer}>
-        <Text style={styles.sectionTitle}>Popular Pidgin Phrases</Text>
-        <FlatList<PhraseEntry>
-          data={typedDictionary}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderPhraseItem}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
-      </View>
+        {/* Direction chips */}
+        <View style={styles.toggleRow}>
+          <TouchableOpacity
+            style={[
+              styles.toggleChip,
+              isEnToPidgin && styles.toggleChipActiveLeft
+            ]}
+            onPress={() => toggleDirectionChip("en-to-pidgin")}
+          >
+            <Text
+              style={[
+                styles.toggleChipText,
+                isEnToPidgin && styles.toggleChipTextActive
+              ]}
+            >
+              English → Pidgin
+            </Text>
+            <Text style={styles.toggleChipHint}>For learning</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.toggleChip,
+              !isEnToPidgin && styles.toggleChipActiveRight
+            ]}
+            onPress={() => toggleDirectionChip("pidgin-to-en")}
+          >
+            <Text
+              style={[
+                styles.toggleChipText,
+                !isEnToPidgin && styles.toggleChipTextActive
+              ]}
+            >
+              Pidgin → English
+            </Text>
+            <Text style={styles.toggleChipHint}>For decoding gist</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Input + Translate */}
+        <View style={styles.translateBox}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionLabelSmall}>Your text</Text>
+            <Text style={styles.sectionLabelLang}>
+              {isEnToPidgin ? "English" : "Nigerian Pidgin"}
+            </Text>
+          </View>
+
+          <TextInput
+            style={styles.input}
+            placeholder={
+              isEnToPidgin
+                ? "e.g. What’s going on?"
+                : "e.g. Wetin dey happen?"
+            }
+            placeholderTextColor={palette.textMuted}
+            multiline
+            value={input}
+            onChangeText={setInput}
+          />
+
+          <TouchableOpacity
+            style={[
+              styles.translateButton,
+              !input.trim() && styles.translateButtonDisabled
+            ]}
+            onPress={handleTranslate}
+            disabled={!input.trim()}
+          >
+            <Text style={styles.translateButtonText}>Translate</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.helperText}>
+            Tip: Start with greetings, simple questions or common street phrases.
+          </Text>
+        </View>
+
+        {/* Translation Result */}
+        {result && (
+          <View style={styles.resultCard}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionLabel}>Translation</Text>
+              <Text style={styles.sectionLabelLang}>
+                {isEnToPidgin ? "Pidgin" : "English"}
+              </Text>
+            </View>
+
+            <Text style={styles.resultMain}>{result.to}</Text>
+
+            {result.pronunciation ? (
+              <View style={styles.resultBlock}>
+                <Text style={styles.resultLabelSmall}>Pronunciation</Text>
+                <Text style={styles.resultSub}>{result.pronunciation}</Text>
+              </View>
+            ) : null}
+
+            {result.examples && result.examples.length > 0 && (
+              <View style={styles.resultBlock}>
+                <Text style={styles.resultLabelSmall}>Example</Text>
+                <Text style={styles.resultSub}>
+                  {isEnToPidgin
+                    ? `${result.examples[0].en} → ${result.examples[0].pidgin}`
+                    : `${result.examples[0].pidgin} → ${result.examples[0].en}`}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        <View style={styles.footerSpace} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safe: {
     flex: 1,
-    backgroundColor: "#050816",
+    backgroundColor: palette.bg
+  },
+  container: {
+    flex: 1
+  },
+  scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 8
+    paddingTop: 4,
+    paddingBottom: 24
+  },
+  flagBar: {
+    flexDirection: "row",
+    height: 4,
+    borderRadius: 999,
+    overflow: "hidden",
+    marginBottom: 10
+  },
+  flagStripe: {
+    flex: 1
   },
   header: {
-    marginBottom: 16
+    marginBottom: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
   },
   appTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#ffffff"
+    fontSize: 30,
+    fontWeight: "800",
+    color: palette.textMain
   },
   appSubtitle: {
     fontSize: 14,
-    color: "#9ca3af",
-    marginTop: 4
+    color: palette.textMuted,
+    marginTop: 4,
+    maxWidth: 260
   },
-  toggleButton: {
-    backgroundColor: "#111827",
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
+  badge: {
+    backgroundColor: palette.cardSoft,
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderWidth: 1,
-    borderColor: "#1f2937"
+    borderColor: palette.accentGold
   },
-  toggleText: {
-    color: "#e5e7eb",
-    fontSize: 16,
+  badgeText: {
+    color: palette.accentGold,
+    fontSize: 11,
+    fontWeight: "700"
+  },
+  toggleRow: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 14
+  },
+  toggleChip: {
+    flex: 1,
+    backgroundColor: palette.chipBg,
+    borderRadius: 999,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: palette.border
+  },
+  toggleChipActiveLeft: {
+    backgroundColor: palette.accentGreen,
+    borderColor: "#bbf7d0"
+  },
+  toggleChipActiveRight: {
+    backgroundColor: palette.accentRed,
+    borderColor: "#fecaca"
+  },
+  toggleChipText: {
+    color: palette.textSub,
+    fontSize: 14,
     fontWeight: "600"
   },
-  toggleHint: {
-    color: "#9ca3af",
-    fontSize: 12,
-    marginTop: 4
+  toggleChipTextActive: {
+    color: "#050308"
+  },
+  toggleChipHint: {
+    color: palette.textMuted,
+    fontSize: 11,
+    marginTop: 2
   },
   translateBox: {
-    backgroundColor: "#111827",
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: palette.card,
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#1f2937"
+    borderColor: palette.border
   },
-  label: {
-    color: "#9ca3af",
-    marginBottom: 6,
-    fontSize: 13
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6
+  },
+  sectionLabel: {
+    color: palette.accentGold,
+    fontSize: 15,
+    fontWeight: "700"
+  },
+  sectionLabelSmall: {
+    color: palette.textMuted,
+    fontSize: 13,
+    fontWeight: "600"
+  },
+  sectionLabelLang: {
+    color: palette.textSub,
+    fontSize: 12,
+    fontWeight: "600",
+    backgroundColor: palette.cardSoft,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 999
   },
   input: {
-    backgroundColor: "#020617",
-    color: "#f9fafb",
+    backgroundColor: palette.cardSoft,
+    color: palette.textMain,
     borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     fontSize: 15,
-    minHeight: 40
+    minHeight: 44,
+    borderWidth: 1,
+    borderColor: palette.border
   },
   translateButton: {
     marginTop: 10,
-    backgroundColor: "#22c55e",
-    paddingVertical: 10,
+    backgroundColor: palette.accentGreen,
+    paddingVertical: 12,
     borderRadius: 999,
-    alignItems: "center"
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 5
+  },
+  translateButtonDisabled: {
+    opacity: 0.6
   },
   translateButtonText: {
-    color: "#022c22",
-    fontWeight: "700",
-    fontSize: 16
+    color: "#ffffffff",
+    fontWeight: "800",
+    fontSize: 16,
+    letterSpacing: 0.4
+  },
+  helperText: {
+    marginTop: 6,
+    fontSize: 11,
+    color: palette.textMuted
   },
   resultCard: {
-    backgroundColor: "#0b1120",
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: palette.card,
+    borderRadius: 18,
+    padding: 14,
+    marginBottom: 14,
     borderWidth: 1,
-    borderColor: "#1f2937"
+    borderColor: palette.border
   },
-  resultLabel: {
-    color: "#a5b4fc",
-    fontSize: 13,
-    fontWeight: "600",
-    marginBottom: 4
+  resultMain: {
+    color: palette.textMain,
+    fontSize: 19,
+    fontWeight: "700",
+    marginBottom: 8
+  },
+  resultBlock: {
+    marginTop: 6
   },
   resultLabelSmall: {
-    color: "#9ca3af",
+    color: palette.textMuted,
     fontSize: 12,
     fontWeight: "600",
-    marginTop: 8,
     marginBottom: 2
   },
-  resultText: {
-    color: "#e5e7eb",
-    fontSize: 18,
-    fontWeight: "600"
-  },
-  resultSubText: {
-    color: "#d1d5db",
+  resultSub: {
+    color: palette.textSub,
     fontSize: 14
   },
-  phraseOfDayCard: {
-    backgroundColor: "#111827",
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#1f2937"
-  },
-  sectionTitle: {
-    color: "#a5b4fc",
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 6
-  },
-  phraseOfDayMain: {
-    color: "#f9fafb",
-    fontSize: 16,
-    fontWeight: "600"
-  },
-  phraseOfDaySub: {
-    color: "#e5e7eb",
-    fontSize: 14,
-    marginTop: 2
-  },
-  pronunciationSmall: {
-    color: "#9ca3af",
-    fontSize: 12,
-    marginTop: 2
-  },
-  phrasebookContainer: {
-    marginTop: 4
-  },
-  phraseCard: {
-    backgroundColor: "#020617",
-    borderRadius: 14,
-    padding: 10,
-    marginRight: 8,
-    width: 220,
-    borderWidth: 1,
-    borderColor: "#1f2937"
-  },
-  phraseFrom: {
-    color: "#f9fafb",
-    fontSize: 14,
-    fontWeight: "600"
-  },
-  phraseTo: {
-    color: "#a5b4fc",
-    fontSize: 14,
-    marginTop: 2
-  },
-  pronunciation: {
-    color: "#9ca3af",
-    fontSize: 12,
-    marginTop: 4
-  },
-  example: {
-    color: "#d1d5db",
-    fontSize: 12,
-    marginTop: 4
+  footerSpace: {
+    height: 16
   }
 });
