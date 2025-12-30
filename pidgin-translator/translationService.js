@@ -1,4 +1,4 @@
-import { pidginDictionary } from "./dictionary";
+import { pidginDictionary } from "./piginDictionary";
 
 export function translateText(input, direction = "en-to-pidgin") {
   if (!input || !input.trim()) return null;
@@ -6,9 +6,7 @@ export function translateText(input, direction = "en-to-pidgin") {
   const normalized = input.trim().toLowerCase();
 
   const [fromLang, toLang] =
-    direction === "en-to-pidgin"
-      ? ["en", "pidgin"]
-      : ["pidgin", "en"];
+    direction === "en-to-pidgin" ? ["en", "pidgin"] : ["pidgin", "en"];
 
   // Exact match
   const directMatch = pidginDictionary.find(
@@ -20,7 +18,7 @@ export function translateText(input, direction = "en-to-pidgin") {
 
   if (directMatch) return directMatch;
 
-  // Loose "contains" match for partial phrases
+  // Loose "contains" match
   const looseMatch = pidginDictionary.find(
     (entry) =>
       entry.languageFrom === fromLang &&

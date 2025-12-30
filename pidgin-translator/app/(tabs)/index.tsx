@@ -1,98 +1,351 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from "react";
+import {
+  SafeAreaView,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  StatusBar
+} from "react-native";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { translateText, getRandomPhrase } from "../../translationService";
+import { pidginDictionary } from "../../piginDictionary";
+
+// ----- Types -----
+type Direction = "en-to-pidgin" | "pidgin-to-en";
+
+type ExamplePair = {
+  en?: string;
+  pidgin?: string;
+};
+
+type PhraseEntry = {
+  id: number;
+  languageFrom: "en" | "pidgin";
+  languageTo: "en" | "pidgin";
+  from: string;
+  to: string;
+  pronunciation?: string;
+  examples?: ExamplePair[];
+  tags?: string[];
+};
+
+// We tell TS what the dictionary actually contains
+const typedDictionary = pidginDictionary as PhraseEntry[];
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+  const [direction, setDirection] = useState<Direction>("en-to-pidgin");
+  const [input, setInput] = useState<string>("");
+  const [result, setResult] = useState<PhraseEntry | null>(null);
+  const [phraseOfTheDay, setPhraseOfTheDay] = useState<PhraseEntry | null>(null);
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+  useEffect(() => {
+    const randomPhrase = getRandomPhrase() as PhraseEntry | null;
+    setPhraseOfTheDay(randomPhrase);
+  }, []);
+
+  const handleTranslate = () => {
+    const translation = translateText(input, direction) as PhraseEntry | null;
+    setResult(translation);
+  };
+
+  const toggleDirection = () => {
+    setDirection((prev) =>
+      prev === "en-to-pidgin" ? "pidgin-to-en" : "en-to-pidgin"
+    );
+    setResult(null);
+    setInput("");
+  };
+
+  const directionLabel =
+    direction === "en-to-pidgin"
+      ? "English → Nigerian Pidgin"
+      : "Nigerian Pidgin → English";
+
+  const renderPhraseItem = ({ item }: { item: PhraseEntry }) => (
+    <View style={styles.phraseCard}>
+      <Text style={styles.phraseFrom}>{item.from}</Text>
+      <Text style={styles.phraseTo}>{item.to}</Text>
+
+      {item.pronunciation ? (
+        <Text style={styles.pronunciation}>
+          Pronunciation: {item.pronunciation}
+        </Text>
+      ) : null}
+
+      {item.examples && item.examples[0] && (
+        <Text style={styles.example}>
+          Example:{" "}
+          {item.languageFrom === "en"
+            ? `${item.examples[0].en} → ${item.examples[0].pidgin}`
+            : `${item.examples[0].pidgin} → ${item.examples[0].en}`}
+        </Text>
+      )}
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.appTitle}>Pidgin Pal</Text>
+        <Text style={styles.appSubtitle}>
+          Learn & translate Nigerian Pidgin with vibes ✨
+        </Text>
+      </View>
+
+      {/* Language Direction Toggle */}
+      <TouchableOpacity style={styles.toggleButton} onPress={toggleDirection}>
+        <Text style={styles.toggleText}>{directionLabel}</Text>
+        <Text style={styles.toggleHint}>(Tap to switch direction)</Text>
+      </TouchableOpacity>
+
+      {/* Input + Translate */}
+      <View style={styles.translateBox}>
+        <Text style={styles.label}>
+          {direction === "en-to-pidgin"
+            ? "Type an English phrase"
+            : "Type a Pidgin phrase"}
+        </Text>
+
+        <TextInput
+          style={styles.input}
+          placeholder={
+            direction === "en-to-pidgin"
+              ? "e.g. What’s going on?"
+              : "e.g. Wetin dey happen?"
+          }
+          placeholderTextColor="#6b7280"
+          multiline
+          value={input}
+          onChangeText={setInput}
+        />
+
+        <TouchableOpacity style={styles.translateButton} onPress={handleTranslate}>
+          <Text style={styles.translateButtonText}>Translate</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Translation Result */}
+      {result && (
+        <View style={styles.resultCard}>
+          <Text style={styles.resultLabel}>Translation</Text>
+          <Text style={styles.resultText}>{result.to}</Text>
+
+          {result.pronunciation ? (
+            <>
+              <Text style={styles.resultLabelSmall}>Pronunciation</Text>
+              <Text style={styles.resultSubText}>{result.pronunciation}</Text>
+            </>
+          ) : null}
+
+          {result.examples && result.examples.length > 0 && (
+            <>
+              <Text style={styles.resultLabelSmall}>Example</Text>
+              <Text style={styles.resultSubText}>
+                {direction === "en-to-pidgin"
+                  ? `${result.examples[0].en} → ${result.examples[0].pidgin}`
+                  : `${result.examples[0].pidgin} → ${result.examples[0].en}`}
+              </Text>
+            </>
+          )}
+        </View>
+      )}
+
+      {/* Phrase of the Day */}
+      {phraseOfTheDay && (
+        <View style={styles.phraseOfDayCard}>
+          <Text style={styles.sectionTitle}>Phrase of the Day</Text>
+          <Text style={styles.phraseOfDayMain}>{phraseOfTheDay.from}</Text>
+          <Text style={styles.phraseOfDaySub}>{phraseOfTheDay.to}</Text>
+          {phraseOfTheDay.pronunciation && (
+            <Text style={styles.pronunciationSmall}>
+              {phraseOfTheDay.pronunciation}
+            </Text>
+          )}
+        </View>
+      )}
+
+      {/* Phrasebook */}
+      <View style={styles.phrasebookContainer}>
+        <Text style={styles.sectionTitle}>Popular Pidgin Phrases</Text>
+        <FlatList<PhraseEntry>
+          data={typedDictionary}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderPhraseItem}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#050816",
+    paddingHorizontal: 16,
+    paddingTop: 8
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  header: {
+    marginBottom: 16
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  appTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#ffffff"
   },
+  appSubtitle: {
+    fontSize: 14,
+    color: "#9ca3af",
+    marginTop: 4
+  },
+  toggleButton: {
+    backgroundColor: "#111827",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#1f2937"
+  },
+  toggleText: {
+    color: "#e5e7eb",
+    fontSize: 16,
+    fontWeight: "600"
+  },
+  toggleHint: {
+    color: "#9ca3af",
+    fontSize: 12,
+    marginTop: 4
+  },
+  translateBox: {
+    backgroundColor: "#111827",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#1f2937"
+  },
+  label: {
+    color: "#9ca3af",
+    marginBottom: 6,
+    fontSize: 13
+  },
+  input: {
+    backgroundColor: "#020617",
+    color: "#f9fafb",
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 15,
+    minHeight: 40
+  },
+  translateButton: {
+    marginTop: 10,
+    backgroundColor: "#22c55e",
+    paddingVertical: 10,
+    borderRadius: 999,
+    alignItems: "center"
+  },
+  translateButtonText: {
+    color: "#022c22",
+    fontWeight: "700",
+    fontSize: 16
+  },
+  resultCard: {
+    backgroundColor: "#0b1120",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#1f2937"
+  },
+  resultLabel: {
+    color: "#a5b4fc",
+    fontSize: 13,
+    fontWeight: "600",
+    marginBottom: 4
+  },
+  resultLabelSmall: {
+    color: "#9ca3af",
+    fontSize: 12,
+    fontWeight: "600",
+    marginTop: 8,
+    marginBottom: 2
+  },
+  resultText: {
+    color: "#e5e7eb",
+    fontSize: 18,
+    fontWeight: "600"
+  },
+  resultSubText: {
+    color: "#d1d5db",
+    fontSize: 14
+  },
+  phraseOfDayCard: {
+    backgroundColor: "#111827",
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#1f2937"
+  },
+  sectionTitle: {
+    color: "#a5b4fc",
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 6
+  },
+  phraseOfDayMain: {
+    color: "#f9fafb",
+    fontSize: 16,
+    fontWeight: "600"
+  },
+  phraseOfDaySub: {
+    color: "#e5e7eb",
+    fontSize: 14,
+    marginTop: 2
+  },
+  pronunciationSmall: {
+    color: "#9ca3af",
+    fontSize: 12,
+    marginTop: 2
+  },
+  phrasebookContainer: {
+    marginTop: 4
+  },
+  phraseCard: {
+    backgroundColor: "#020617",
+    borderRadius: 14,
+    padding: 10,
+    marginRight: 8,
+    width: 220,
+    borderWidth: 1,
+    borderColor: "#1f2937"
+  },
+  phraseFrom: {
+    color: "#f9fafb",
+    fontSize: 14,
+    fontWeight: "600"
+  },
+  phraseTo: {
+    color: "#a5b4fc",
+    fontSize: 14,
+    marginTop: 2
+  },
+  pronunciation: {
+    color: "#9ca3af",
+    fontSize: 12,
+    marginTop: 4
+  },
+  example: {
+    color: "#d1d5db",
+    fontSize: 12,
+    marginTop: 4
+  }
 });
